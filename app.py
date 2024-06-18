@@ -14,19 +14,16 @@ CORS(app)
 
 # Load the model in the SavedModel format
 try:
-    import os
-    import tensorflow as tf
-
-# Define the directory where the model is stored
+    # Define the directory where the model is stored
     model_dir = "model"
 
-# Define the filename of the model
+    # Define the filename of the model
     model_filename = "EfficientNetV2B0.h5"
 
-# Construct the full path to the model file by joining the directory and filename
+    # Construct the full path to the model file by joining the directory and filename
     model_path = os.path.join(model_dir, model_filename)
 
-# Load the TensorFlow Keras model from the specified file path
+    # Load the TensorFlow Keras model from the specified file path
     model = tf.keras.models.load_model(model_path)
 
     print("Model loaded successfully.")
@@ -151,6 +148,7 @@ def predict_image():
         predictions = model.predict(img_array)
         predicted_class = tf.argmax(predictions[0]).numpy()
         confidence = predictions[0][predicted_class]
+        is_above_threshold = bool(confidence > 0.5)  # Convert to regular Python boolean
 
         # Get plant info
         predicted_plant = class_names[predicted_class]
@@ -158,10 +156,15 @@ def predict_image():
 
         # Return prediction result
         return jsonify({
-            'plant': predicted_plant,
-            'binomial': plant_details['binomial'],
-            'description': plant_details['description'],
-            'benefit': plant_details['benefit']
+            'message': 'Model is predicted successfully.',
+            'data': {
+                'result': predicted_plant,
+                'confidenceScore': float(confidence * 100),  # Convert to percentage
+                'isAboveThreshold': is_above_threshold,
+                'binomial': plant_details['binomial'],
+                'description': plant_details['description'],
+                'benefit': plant_details['benefit']
+            }
         }), 200
 
     except Exception as e:
